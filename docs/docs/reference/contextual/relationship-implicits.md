@@ -34,28 +34,27 @@ Delegate clauses can be mapped to combinations of implicit objects, classes and 
     use a forwarder to that reference without caching it.
   - If the right hand side is more complex, but still known to be pure, we can
     create a `val` that computes it ahead of time.
+    
+Examples:
+```scala
+  delegate global for ExecutionContext = new ForkJoinContext()
+  delegate config for Config = default.config
 
- Examples:
+  val ctx: Context
+  delegate for Context = ctx
+```
+would map to
+```scala
+  private[this] var global$cache: ExecutionContext | Null = null
+  final implicit def global: ExecutionContext = {
+    if (global$cache == null) global$cache = new ForkJoinContext()
+    global$cache
+  }
 
-    ```scala
-      delegate global for ExecutionContext = new ForkJoinContext()
-      delegate config for Config = default.config
+  final implicit val config: Config = default.config
 
-      val ctx: Context
-      delegate for Context = ctx
-    ```
-    would map to
-    ```scala
-      private[this] var global$cache: ExecutionContext | Null = null
-      final implicit def global: ExecutionContext = {
-        if (global$cache == null) global$cache = new ForkJoinContext()
-        global$cache
-      }
-
-      final implicit val config: Config = default.config
-
-      final implicit def Context_delegate = ctx
-    ```
+  final implicit def Context_delegate = ctx
+```
 
 ### Anonymous Delegates
 
